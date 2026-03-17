@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia Erik Erikson</title>
+
+<style>
+body{
+    margin:0;
+    font-family: system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background-size:cover;
+    background-position:center;
+    transition:background-image .6s ease-in-out;
+}
+
+/* Capa oscura para legibilidad */
+.overlay{
+    background:rgba(0,0,0,.55);
+    width:100%;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.game{
+    background:white;
+    width:100%;
+    max-width:420px;
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+}
+
+h1{
+    text-align:center;
+    font-size:1.4rem;
+    margin-bottom:10px;
+}
+
+.status{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:15px;
+    font-weight:bold;
+}
+
+.question{
+    font-size:1.05rem;
+    margin-bottom:15px;
+}
+
+.options button{
+    width:100%;
+    padding:12px;
+    margin-bottom:10px;
+    border:none;
+    border-radius:10px;
+    font-size:0.95rem;
+    background:#e5e7eb;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.options button:hover{
+    background:#c7d2fe;
+}
+
+.correct{
+    background:#bbf7d0 !important;
+}
+
+.incorrect{
+    background:#fecaca !important;
+}
+
+.message{
+    text-align:center;
+    font-weight:bold;
+    margin-top:10px;
+}
+
+.hidden{
+    display:none;
+}
+
+.trophy{
+    font-size:4rem;
+    text-align:center;
+}
+
+.restart{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    background:#2563eb;
+    color:white;
+    font-size:1rem;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="overlay">
+<div class="game">
+
+<h1>Trivia del Desarrollo Psicosocial</h1>
+
+<div class="status">
+    <div>⭐ Puntos: <span id="points">0</span></div>
+    <div>❤️ Vidas: <span id="lives">3</span></div>
+</div>
+
+<div id="question" class="question"></div>
+<div class="options" id="options"></div>
+<div id="message" class="message"></div>
+
+<div id="end" class="hidden">
+    <div class="trophy" id="trophy"></div>
+    <p class="message" id="finalMessage"></p>
+    <button class="restart" onclick="restart()">Reiniciar juego</button>
+</div>
+
+</div>
+</div>
+
+<script>
+const questions = [
+    {
+        q:"¿Qué conflicto corresponde a la primera etapa de Erikson?",
+        options:["Confianza vs. Desconfianza","Identidad vs. Confusión","Iniciativa vs. Culpa"],
+        answer:0,
+        bg:"https://images.unsplash.com/photo-1546015720-b8b30df5aa27"
+    },
+    {
+        q:"Etapa donde el niño busca independencia y control:",
+        options:["Laboriosidad vs. Inferioridad","Autonomía vs. Vergüenza y duda","Intimidad vs. Aislamiento"],
+        answer:1,
+        bg:"https://images.unsplash.com/photo-1504151932400-72d4384f04b3"
+    },
+    {
+        q:"Conflicto central en la edad preescolar:",
+        options:["Iniciativa vs. Culpa","Generatividad vs. Estancamiento","Confianza vs. Desconfianza"],
+        answer:0,
+        bg:"https://images.unsplash.com/photo-1503457574465-1c8c5c8a0e9f"
+    },
+    {
+        q:"Etapa relacionada con el desempeño escolar:",
+        options:["Laboriosidad vs. Inferioridad","Identidad vs. Confusión","Integridad vs. Desesperación"],
+        answer:0,
+        bg:"https://images.unsplash.com/photo-1588072432836-e10032774350"
+    },
+    {
+        q:"Conflicto característico de la adolescencia:",
+        options:["Intimidad vs. Aislamiento","Identidad vs. Confusión de roles","Autonomía vs. Vergüenza"],
+        answer:1,
+        bg:"https://images.unsplash.com/photo-1520975922284-7b3a07c8c6b1"
+    },
+    {
+        q:"Etapa del adulto joven según Erikson:",
+        options:["Generatividad vs. Estancamiento","Integridad vs. Desesperación","Intimidad vs. Aislamiento"],
+        answer:2,
+        bg:"https://images.unsplash.com/photo-1529156069898-49953e39b3ac"
+    },
+    {
+        q:"Interés por contribuir a la siguiente generación:",
+        options:["Generatividad vs. Estancamiento","Laboriosidad vs. Inferioridad","Identidad vs. Confusión"],
+        answer:0,
+        bg:"https://images.unsplash.com/photo-1509099836639-18ba1795216d"
+    },
+    {
+        q:"Etapa final del desarrollo psicosocial:",
+        options:["Integridad del yo vs. Desesperación","Intimidad vs. Aislamiento","Autonomía vs. Vergüenza"],
+        answer:0,
+        bg:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e"
+    }
+];
+
+let index = 0;
+let points = 0;
+let lives = 3;
+
+function loadQuestion(){
+    document.getElementById("message").textContent="";
+    if(index >= questions.length){
+        endGame();
+        return;
+    }
+
+    const q = questions[index];
+    document.body.style.backgroundImage = `url('${q.bg}')`;
+    document.getElementById("question").textContent = q.q;
+
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML="";
+
+    q.options.forEach((opt,i)=>{
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.onclick = ()=>checkAnswer(btn,i);
+        optionsDiv.appendChild(btn);
+    });
+}
+
+function checkAnswer(button,choice){
+    const correct = questions[index].answer;
+
+    if(choice === correct){
+        button.classList.add("correct");
+        points += 10;
+        document.getElementById("message").textContent="✔ Respuesta correcta";
+    }else{
+        button.classList.add("incorrect");
+        lives--;
+        document.getElementById("message").textContent="✖ Respuesta incorrecta";
+    }
+
+    document.getElementById("points").textContent = points;
+    document.getElementById("lives").textContent = lives;
+
+    setTimeout(()=>{
+        if(lives <= 0){
+            endGame();
+        }else{
+            index++;
+            loadQuestion();
+        }
+    },900);
+}
+
+function endGame(){
+    document.getElementById("question").classList.add("hidden");
+    document.getElementById("options").classList.add("hidden");
+    document.getElementById("end").classList.remove("hidden");
+
+    let trophy="", msg="";
+
+    if(points >= 70){
+        trophy="🥇"; msg="Excelente dominio del modelo de Erikson";
+    }else if(points >= 50){
+        trophy="🥈"; msg="Muy buen nivel de comprensión";
+    }else if(points >= 30){
+        trophy="🥉"; msg="Buen intento, conviene repasar";
+    }else{
+        msg="Es recomendable revisar las etapas nuevamente";
+    }
+
+    document.getElementById("trophy").textContent = trophy;
+    document.getElementById("finalMessage").textContent = msg;
+}
+
+function restart(){
+    index=0; points=0; lives=3;
+    document.getElementById("points").textContent=points;
+    document.getElementById("lives").textContent=lives;
+    document.getElementById("question").classList.remove("hidden");
+    document.getElementById("options").classList.remove("hidden");
+    document.getElementById("end").classList.add("hidden");
+    loadQuestion();
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>
